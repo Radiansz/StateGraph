@@ -70,6 +70,7 @@ int main(int argc, char *argv[])
     graph.setFinalState(&s5);
     graph.findPath(s1,&s5);
     res = graph.serialize();*/
+    graph.serializeToFile("newGraph.sg");
     Logger::write(res);
 
 

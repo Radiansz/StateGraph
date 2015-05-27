@@ -257,12 +257,19 @@ namespace States {
         ~StateGraph(){
 
         }
+        void serializeToFile(QString file){
+            QFile* inFile = new QFile(file);
+            if(inFile->open(QIODevice::WriteOnly)){
+                QTextStream out(inFile);
+                out << serialize();
+                inFile->close();
+            }
+        }
 
         QString serialize(){
             QDomNode el = serializeToDom();
             QDomDocument doc = el.toDocument();
             return doc.toString() ;
-
         }
 
         QDomNode serializeToDom(){
