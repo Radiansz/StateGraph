@@ -1,6 +1,7 @@
 #ifndef STATEGRAPH_H
 #define STATEGRAPH_H
-
+#include <iomanip>
+#include <iostream>
 #include <vector>
 #include <state.h>
 #include <superstate.h>
@@ -15,6 +16,8 @@
 #include "QDomText"
 #include "QFile"
 #include "QTextStream"
+
+
 namespace States {
     template <class V>
     class State;
@@ -26,15 +29,33 @@ namespace States {
     class StateIterator;
 
     template <class T>
+    class StateManip;
+
+    template <class T>
+    std::ostream& operator<< (std::ostream& out, StateGraph<T>& graph){
+        QString str = graph.serialize();
+        return out << str.toUtf8().data();
+    }
+
+    template <class T>
+    std::istream& operator>> (std::istream& in, StateGraph<T>& graph){
+
+        return in;
+    }
+
+    template <class T>
     class StateGraph
     {
 
+        friend std::ostream& operator<< <T>(std::ostream&, StateGraph&);
+        friend class StateManip<T>;
 
         State<T>* initialS;
         State<T>* finalS;
         std::vector< State<T>* > states;
         std::vector< std::vector<int> > connections;
         int statesAmount;
+        StateManip<T>* manip;
 
         State<T>* src;
         State<T>* dst;
@@ -253,8 +274,10 @@ namespace States {
 
         StateGraph(){
             statesAmount = 0;
+            manip = new StateManip<T>(this,1);
         }
         ~StateGraph(){
+            delete manip;
 
         }
         void serializeToFile(QString file){
@@ -381,6 +404,57 @@ namespace States {
                 }
             }
         }
+
+        StateManip<T>& statesDesc(int i){
+            return *manip;
+        }
     };
+
+
+    template <class T>
+    std::ostream& operator<< (std::ostream& out, StateManip<T>& mnp){
+        std::vector<State<T>*> states = mnp.getStates();
+        int statesAmount = mnp.getAm();
+        if(mnp.statesNum > statesAmount)
+            mnp.statesNum = statesAmount;
+        if(mnp.statesNum < 0)
+            mnp.statesNum = 0;
+        out << "Number of the states: " << statesAmount << "\n" <<
+               "First " << mnp.statesNum << " states: \n";
+        int temp =0;
+        for(typename std::vector<State<T>* >::const_iterator i = states.begin(); temp < mnp.statesNum; ++i, temp++ )
+        {
+            QString temp = (*i)->serialize();
+            out << temp.toUtf8().data();
+        }
+        return out;
+    }
+
+    template <class T>
+    class StateManip{
+
+        friend std::ostream& operator<< <T>(std::ostream&, StateManip&);
+        typedef typename std::vector<State<T>* >::const_iterator statesCI;
+        int statesNum;
+        StateGraph<T>* graph;
+
+        std::vector<State<T>*> getStates(){
+            return graph->states;
+        }
+
+        int getAm(){
+            return graph->statesAmount;
+        }
+
+        public:
+
+        StateManip(){}
+        StateManip(StateGraph<T>* graph, int i=1):graph(graph),statesNum(i){
+
+        }
+
+
+    };
+
 }
 #endif // STATEGRAPH_H

@@ -34,6 +34,7 @@ int main(int argc, char *argv[])
     States::StateGraph<testClass> graph;
     States::StateGraph<testClass> graph2;
     graph.deserializeFromFile("Graph.txt");
+    std::cout << graph << graph.statesDesc(1);
 /*    States::State<testClass>* gs1 = new States::State<testClass>(testClass("SubNode",1));
     States::State<testClass>* gs2 = new States::State<testClass>(testClass("SubNode",2));
     States::State<testClass>* gs3 = new States::State<testClass>(testClass("SubNode",3));
