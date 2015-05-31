@@ -41,6 +41,16 @@ void PaintWidget::newState(){
 void PaintWidget::newConnection(){
     creatingConn = true;
 }
+
+void PaintWidget::openFile(QString file){
+    int i =2;
+}
+
+void PaintWidget::saveFile(QString file){
+
+}
+
+
 bool PaintWidget::isBusy(){
     return creatingState && movingState && creatingConn && pickingPath && movingScreen;
 }

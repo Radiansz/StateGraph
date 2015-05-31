@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QFileDialog>
 
 namespace Ui {
 class MainWindow;
@@ -17,6 +18,11 @@ public:
 
 private slots:
     void on_pushButton_clicked();
+
+    void on_actionOpen_triggered();
+signals:
+    void openFile(QString file);
+    void saveFile(QString file);
 
 private:
     Ui::MainWindow *ui;

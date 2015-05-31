@@ -23,6 +23,9 @@ public:
 public slots:
     void newState();
     void newConnection();
+
+    void openFile(QString);
+    void saveFile(QString);
 private:
     void drawState(States::State<ScreenData>*, QPainter &);
     void drawConnection(States::State<ScreenData>* s1, States::State<ScreenData>* s2 , QPainter &p);
