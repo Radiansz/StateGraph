@@ -2,7 +2,7 @@
 #define SUPERSTATE_H
 
 #include <state.h>
-#include <stategraph.h>
+#include <StateGraph.h>
 #include <QString>
 #include "QDomDocument"
 #include "QDomNode"
@@ -12,7 +12,7 @@
 namespace States {
 
 template <class V>
-class StateGraph;
+class StateDiagram;
 
 template <class C>
 class State;
@@ -21,15 +21,15 @@ template <class T>
 class SuperState : public State<T>
 {
 
-    StateGraph<T> * innerGraph;
+    StateDiagram<T> * innerGraph;
 
 public:
 
-    void setInnerGraph(StateGraph<T>* graph){
+    void setInnerGraph(StateDiagram<T>* graph){
         innerGraph = graph;
     }
 
-    StateGraph<T>* getInnerGraph(){
+    StateDiagram<T>* getInnerGraph(){
         return innerGraph;
     }
 
@@ -104,7 +104,7 @@ public:
                 }
                 else
                 {
-                    StateGraph<T>* graph = new StateGraph<T>();
+                    StateDiagram<T>* graph = new StateDiagram<T>();
                     graph->deserializeFromDom(node);
                     innerGraph = graph;
                 }

@@ -1,5 +1,5 @@
-#ifndef STATEGRAPH_H
-#define STATEGRAPH_H
+#ifndef StateDiagram_H
+#define StateDiagram_H
 #include <iomanip>
 #include <iostream>
 #include <vector>
@@ -32,22 +32,22 @@ namespace States {
     class StateManip;
 
     template <class T>
-    std::ostream& operator<< (std::ostream& out, StateGraph<T>& graph){
+    std::ostream& operator<< (std::ostream& out, StateDiagram<T>& graph){
         QString str = graph.serialize();
         return out << str.toUtf8().data();
     }
 
     template <class T>
-    std::istream& operator>> (std::istream& in, StateGraph<T>& graph){
+    std::istream& operator>> (std::istream& in, StateDiagram<T>& graph){
 
         return in;
     }
 
     template <class T>
-    class StateGraph
+    class StateDiagram
     {
 
-        friend std::ostream& operator<< <T>(std::ostream&, StateGraph&);
+        friend std::ostream& operator<< <T>(std::ostream&, StateDiagram&);
         friend class StateManip<T>;
 
         State<T>* initialS;
@@ -272,11 +272,11 @@ namespace States {
 
 
 
-        StateGraph(){
+        StateDiagram(){
             statesAmount = 0;
             manip = new StateManip<T>(this,1);
         }
-        ~StateGraph(){
+        ~StateDiagram(){
             delete manip;
 
         }
@@ -436,7 +436,7 @@ namespace States {
         friend std::ostream& operator<< <T>(std::ostream&, StateManip&);
         typedef typename std::vector<State<T>* >::const_iterator statesCI;
         int statesNum;
-        StateGraph<T>* graph;
+        StateDiagram<T>* graph;
 
         std::vector<State<T>*> getStates(){
             return graph->states;
@@ -449,7 +449,7 @@ namespace States {
         public:
 
         StateManip(){}
-        StateManip(StateGraph<T>* graph, int i=1):graph(graph),statesNum(i){
+        StateManip(StateDiagram<T>* graph, int i=1):graph(graph),statesNum(i){
 
         }
 
@@ -457,4 +457,4 @@ namespace States {
     };
 
 }
-#endif // STATEGRAPH_H
+#endif // StateDiagram_H

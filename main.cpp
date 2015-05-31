@@ -3,7 +3,7 @@
 #include <testclass.h>
 #include <simplelogger.h>
 #include <vector>
-#include <stategraph.h>
+#include <StateGraph.h>
 #include <state.h>
 #include <superstate.h>
 #include <iostream>
@@ -31,8 +31,8 @@ int main(int argc, char *argv[])
     testClass test("Hello", 3);
     QString res = test.serialize();
     Logger::write(res);
-    States::StateGraph<testClass> graph;
-    States::StateGraph<testClass> graph2;
+    States::StateDiagram<testClass> graph;
+    States::StateDiagram<testClass> graph2;
     graph.deserializeFromFile("Graph.txt");
     std::cout << graph << graph.statesDesc(1);
 /*    States::State<testClass>* gs1 = new States::State<testClass>(testClass("SubNode",1));

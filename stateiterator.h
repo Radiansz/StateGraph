@@ -4,18 +4,18 @@
 #include <algorithm>
 #include <vector>
 #include <state.h>
-#include <stategraph.h>
+#include <StateGraph.h>
 namespace States {
 template <class V>
 class State;
 
 template <class N>
-class StateGraph;
+class StateDiagram;
 
 template <class T>
 class StateIterator
 {
-    friend class StateGraph<T>;
+    friend class StateDiagram<T>;
 private:
     std::vector< State<T>* > data;
     int index;

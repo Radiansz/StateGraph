@@ -1,7 +1,7 @@
 #ifndef STATE_H
 #define STATE_H
 #include <vector>
-#include <stategraph.h>
+#include <StateGraph.h>
 
 #include <QString>
 #include "QDomDocument"
@@ -11,12 +11,12 @@
 namespace States {
 
     template <class V>
-    class StateGraph;
+    class StateDiagram;
 
     template <class T>
     class State
     {
-        friend class StateGraph<T>;
+        friend class StateDiagram<T>;
     protected:
 
         T data;
