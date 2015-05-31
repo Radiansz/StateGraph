@@ -16,6 +16,7 @@
 #include "QDomText"
 #include "QFile"
 #include "QTextStream"
+#include "QVector2D"
 
 
 namespace States {

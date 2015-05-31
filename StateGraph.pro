@@ -21,7 +21,9 @@ SOURCES += main.cpp\
     superstate.cpp \
     stateexception.cpp \
     wrongindexstateexception.cpp \
-    unknownstateexception.cpp
+    unknownstateexception.cpp \
+    paintwidget.cpp \
+    screendata.cpp
 
 HEADERS  += mainwindow.h \
     state.h \
@@ -32,6 +34,8 @@ HEADERS  += mainwindow.h \
     superstate.h \
     stateexception.h \
     wrongindexstateexception.h \
-    unknownstateexception.h
+    unknownstateexception.h \
+    paintwidget.h \
+    screendata.h
 
 FORMS    += mainwindow.ui
