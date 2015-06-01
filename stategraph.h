@@ -154,8 +154,21 @@ namespace States {
             return NULL;
         }
 
+        void deleteStates(){
+
+        }
+
     public:
         typedef StateIterator<T> iterator ;
+
+        StateDiagram(){
+            statesAmount = 0;
+            manip = new StateManip<T>(this,1);
+        }
+        ~StateDiagram(){
+            delete manip;
+            deleteStates();
+        }
 
         void setInitialState(State<T> *newState)
         {
@@ -198,8 +211,14 @@ namespace States {
         }
 
         void addConnection(int srcIndex, int dstIndex){
-            if(srcIndex>=0 && srcIndex<statesAmount && dstIndex>=0 && dstIndex<statesAmount)
-                connections[srcIndex].push_back(dstIndex);
+            if(srcIndex>=0 && srcIndex<statesAmount && dstIndex>=0 && dstIndex<statesAmount){
+                for(std::vector<int>::iterator i = connections[srcIndex].begin(); i<connections[srcIndex].end(); ++i){
+                    if((*i)==dstIndex)
+                        return;
+                }
+                if(srcIndex!= dstIndex)
+                    connections[srcIndex].push_back(dstIndex);
+            }
             else
                 throw WrongIndexStateException();
         }
@@ -263,11 +282,18 @@ namespace States {
         }
 
         iterator findPath(State<T>* source, State<T>* destination){
+            accum.clear();
             std::vector<State<T>* > path;
             src = source;
             dst = destination;
-            StateIterator<int>* itr;
-            int srcI = findIndex(src), dstI = findIndex(dst);
+            int srcI,dstI;
+            try{
+                srcI = findIndex(src);
+                dstI = findIndex(dst);
+            }
+            catch(UnknownStateException){
+                return StateIterator<T>(path);
+            }
             if(!(srcI>=0 && srcI<statesAmount && dstI>=0 && dstI<statesAmount))
                 return path;
             path.clear();
@@ -282,14 +308,7 @@ namespace States {
 
 
 
-        StateDiagram(){
-            statesAmount = 0;
-            manip = new StateManip<T>(this,1);
-        }
-        ~StateDiagram(){
-            delete manip;
 
-        }
         void serializeToFile(QString file){
             QFile* inFile = new QFile(file);
             if(inFile->open(QIODevice::WriteOnly)){
@@ -360,6 +379,7 @@ namespace States {
 
         void deserialize(QString data){
             statesAmount = 0;
+            deleteStates();
             states.clear();
             connections.clear();
             QDomDocument doc;

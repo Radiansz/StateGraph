@@ -26,6 +26,29 @@ class SuperState : public State<T>
 
 public:
 
+    SuperState(){
+        innerGraph = 0;
+    }
+
+    SuperState(T data): State<T>(data){
+        innerGraph = 0;
+    }
+
+    SuperState(SuperState<T> &ss): State<T>(ss){
+        innerGraph = 0;
+
+    }
+
+    SuperState<T>& operator = (State<T> other){
+        swap(other);
+        return *this;
+    }
+
+    ~SuperState(){
+        delete innerGraph;
+    }
+
+
     void setInnerGraph(StateDiagram<T>* graph){
         innerGraph = graph;
     }
@@ -59,26 +82,6 @@ public:
         doc.firstChildElement().appendChild(node2);
         return doc;
     }
-
-    SuperState(){
-        innerGraph = 0;
-    }
-
-    SuperState(T data): State<T>(data){
-        innerGraph = 0;
-    }
-
-    SuperState(SuperState<T> &ss): State<T>(ss){
-        innerGraph = 0;
-
-    }
-
-    SuperState<T>& operator = (State<T> other){
-        swap(other);
-        return *this;
-    }
-
-    ~SuperState();
 
 
     void deserialize(QString data){

@@ -29,6 +29,26 @@ namespace States {
 
     public:
 
+        State(){
+            marked = false;
+        }
+
+
+
+        State(State<T> &state){
+            this->data = state.data;
+            marked = false;
+        }
+
+        State(T data){
+            this->data = data;
+            marked = false;
+        }
+
+        virtual ~State(){
+
+        }
+
 
         T getData(){
             return data;
@@ -49,25 +69,7 @@ namespace States {
             return *this;
         }
 
-        State(){
-            marked = false;
-        }
 
-
-
-        State(State<T> &state){
-            this->data = state.data;
-            marked = false;
-        }
-
-        State(T data){
-            this->data = data;
-            marked = false;
-        }
-
-        ~State(){
-
-        }
 
         virtual QString serialize(){
             QDomNode el = serializeToDom();

@@ -6,17 +6,18 @@ PaintWidget::PaintWidget() : PaintWidget(0)
 
 
 
-PaintWidget::PaintWidget(QWidget *parent):QWidget(parent),pick(QColor(255,40,40)),unpick(QColor(40,40,255)){
+PaintWidget::PaintWidget(QWidget *parent):QWidget(parent),pick(QColor(255,40,40)),unpick(QColor(40,40,255)),pathColor(QColor(40,255,40)){
     graph = new States::StateDiagram<ScreenData>();
-    graph->addState(new States::State<ScreenData>(ScreenData(30,40)));
-    graph->addState(new States::State<ScreenData>(ScreenData(150,40)));
-    graph->addState(new States::State<ScreenData>(ScreenData(90,150)));
-    graph->addConnection(0,1);
-    graph->addConnection(1,2);
+
+    pathDraw = false;
+    pathSrc = 0;
+    pathDst = 0;
     offAll();
 
     offsetX = 0;
     offsetY = 0;
+
+    k = 1.0f;
 
     oldX = 0;
     oldY = 0;
@@ -73,6 +74,12 @@ void PaintWidget::delConnection(){
     removeCon = true;
 }
 
+void PaintWidget::newPath(){
+    offAll();
+    pickingPath = true;
+
+}
+
 void PaintWidget::openFile(QString file){
     States::StateDiagram<ScreenData>* testG = new States::StateDiagram<ScreenData>();
     try{
@@ -82,6 +89,9 @@ void PaintWidget::openFile(QString file){
         return;
     }
     delete testG;
+    choosedState = 0;
+    pathDst = 0;
+    pathSrc = 0;
     graph->deserializeFromFile(file);
 }
 
@@ -111,28 +121,29 @@ void PaintWidget::newInfo(QString info){
 
 
 bool PaintWidget::isBusy(){
-    return creatingState && movingState && creatingConn && pickingPath && movingScreen;
+    return creatingState || movingState || creatingConn || pickingPath || movingScreen || removeState || removeCon;
 }
 //Поиск состояния по координатам
 States::State<ScreenData>* PaintWidget::findState(int x, int y){
+    int w = 70, h =50;
     for(States::StateDiagram<ScreenData>::iterator i = graph->begin(); !i.isEnd() ; i++){
         ScreenData sd = (*i)->getData();
-        if(x >= sd.getX()&& x <= sd.getX() + 100 && y >= sd.getY() && y <= sd.getY() + 80){
+        States::SuperState<ScreenData>* test = dynamic_cast<States::SuperState<ScreenData>*>(*i);
+        if(test){
+            w = 210;
+            h= 150;
+        }
+        else{
+            w = 70;
+            h= 50;
+        }
+        if(x >= sd.getX()&& x <= sd.getX() + w && y >= sd.getY() && y <= sd.getY() + h){
             return *i;
         }
     }
     return 0;
 }
 
-QPoint PaintWidget::findPoint(States::State<ScreenData>* s1,States::State<ScreenData>* s2){
-    float rad = 64;
-    ScreenData sd1 = s1->getData();
-    ScreenData sd2 = s2->getData();
-    QVector2D direct(sd2.getX()-sd1.getX(),sd2.getY()-sd1.getY());
-    direct.normalize();
-    int tx = (direct.x()*rad) + sd1.getX() + 50,ty = (direct.y()*rad) + sd1.getY() + 40;
-    return QPoint(tx - offsetX,ty - offsetY);
-}
 
 void PaintWidget::offAll(){
     creatingState = false;
@@ -150,12 +161,14 @@ void PaintWidget::offAll(){
 }
 
 void PaintWidget::pickState(States::State<ScreenData>* s){
-    ScreenData sd = s->getData();
-    sd.setColor(pick);
-    s->setData(sd);
-    choosedState = s;
-    emit nameChng(sd.getName());
-    emit infoChng(sd.getInfo());
+    if(s!=0){
+        ScreenData sd = s->getData();
+        sd.setColor(pick);
+        s->setData(sd);
+        choosedState = s;
+        emit nameChng(sd.getName());
+        emit infoChng(sd.getInfo());
+    }
 }
 
 void PaintWidget::unpickState(States::State<ScreenData>* s){
@@ -185,22 +198,31 @@ void PaintWidget::mouseDoubleClickEvent(QMouseEvent * e){
 void PaintWidget::mousePressEvent(QMouseEvent* e){
     int x = e->x() + offsetX, y = e->y() + offsetY;
     //Добавление удаление связи
-    if(creatingConn || removeCon){
+    if(creatingConn || removeCon || pickingPath){
         States::State<ScreenData> *st = findState(x,y);
-        if(!stage2){
-            unpickState(choosedState);
-            pickState(st);
-            stage2 = true;
-        }
-        else
-        {
-            if(creatingConn)
-                graph->addConnection(choosedState,st);
+        if(st){
+            if(!stage2){
+                unpickState(choosedState);
+                pickState(st);
+                if(pickingPath)
+                    pathSrc = st;
+                stage2 = true;
+            }
             else
-                graph->removeConnection(choosedState,st);
-            stage2 = false;
-            creatingConn = false;
-            removeCon = false;
+            {
+                if(creatingConn)
+                    graph->addConnection(choosedState,st);
+                else{
+                    if(pickingPath)
+                        pathDst = st;
+                    else
+                        graph->removeConnection(choosedState,st);
+                }
+                stage2 = false;
+                creatingConn = false;
+                removeCon = false;
+                pickingPath = false;
+            }
         }
     }
     //Выбор/начало перемещения состояния или начало перемещения экрана
@@ -278,54 +300,136 @@ void PaintWidget::mouseMoveEvent(QMouseEvent* e){
         update();
     }
 }
-void PaintWidget::drawConnection(States::State<ScreenData>* s1, States::State<ScreenData>* s2 , QPainter &p){
-    p.setPen(unpick);
-    p.drawLine(findPoint(s1,s2),findPoint(s2,s1));
+// Отрисовка
+QPoint PaintWidget::findPoint(States::State<ScreenData>* s1,States::State<ScreenData>* s2){
+    float rad = 45;
+    int xGap = 35, yGap = 25;
+    ScreenData sd1 = s1->getData();
+    ScreenData sd2 = s2->getData();
+    States::SuperState<ScreenData>* test = dynamic_cast<States::SuperState<ScreenData>*>(s1);
+    if(test){
+        xGap = 90;
+        yGap = 60;
+        rad = 108;
+    }
+    QVector2D direct(sd2.getX()-sd1.getX(),sd2.getY()-sd1.getY());
+    direct.normalize();
+    int tx = (direct.x()*rad) + sd1.getX() + xGap,ty = (direct.y()*rad) + sd1.getY() + yGap;
+    return QPoint(tx*k - offsetX,ty*k - offsetY);
 }
 
-void PaintWidget::drawState(States::State<ScreenData>* s, QPainter &p){
+void PaintWidget::drawConnection(States::State<ScreenData>* s1, States::State<ScreenData>* s2,QPainter &p){
+    if(pathDraw)
+        p.setPen(pathColor);
+    else
+        p.setPen(unpick);
+    QPoint p1 = findPoint(s1,s2), p2 = findPoint(s2,s1);
+    p.drawLine(p1,p2);
+    drawArrow(p1,p2,p);
+}
+
+void PaintWidget::drawArrow(const QPoint& p1, const QPoint& p2,QPainter &p ){
+    int leng = 10;
+    int angle = 70;
+    QVector2D dir(p1.x() - p2.x(), p1.y() - p2.y());
+    dir.normalize();
+    QVector2D lDir(dir.x()*qCos(angle) - dir.y()*qSin(angle), dir.x()*qSin(angle) + dir.y()*qCos(angle) );
+    QVector2D rDir(dir.x()*qCos(-angle) - dir.y()*qSin(-angle), dir.x()*qSin(-angle) + dir.y()*qCos(-angle) );
+    QPoint l(leng*k*lDir.x() + p2.x(), leng*k*lDir.y() + p2.y());
+    QPoint r(leng*k*rDir.x() + p2.x(), leng*k*rDir.y() + p2.y());
+    p.drawLine(p2,l);
+    p.drawLine(p2,r);
+}
+
+void PaintWidget::drawState(States::State<ScreenData>* s,States::StateDiagram<ScreenData>* graph, QPainter &p){
 
 
+    int testt = 100*k;
+    int stW = 70*k, stH= 50*k, stlH = 15*k , rad = 30*k;
     ScreenData d = s->getData();
     QString str = d.getName();
-    int x = d.getX() - offsetX, y = d.getY() - offsetY;
-     p.setPen(d.getColor());
+    int x = d.getX()*k - offsetX, y = d.getY()*k - offsetY;
+    if(pathDraw)
+        p.setPen(pathColor);
+    else
+        p.setPen(d.getColor());
     if(graph->isInitialState(s)){
-        p.drawEllipse(x+15,y+5,70,70);
+        p.drawEllipse(x+15*k,y+5*k,rad,rad);
         return;
     }
     if(graph->isFinalState(s)){
-        p.drawEllipse(x+15,y+5,70,70);
-        p.drawEllipse(x,y,30,30);
+        p.drawEllipse(x+15*k,y+5*k,rad,rad);
+        p.drawEllipse(x+stW/8+15*k,y + stH/8 +5*k,rad/2,rad/2);
         return;
     }
     States::SuperState<ScreenData>* test = dynamic_cast<States::SuperState<ScreenData>*>(s);
-    if(test != 0){
-        p.drawRect(x,y,100,80);
-        p.drawRect(x,y,100,15);
-        p.drawRect(x+20,y+30,60,50);
+    if(test != 0 && graph==this->graph){
+        p.drawRect(x,y,210,150);
+        p.drawRect(x,y,210,15);
+        States::StateDiagram<ScreenData>* tgraph = test->getInnerGraph();
+        if(tgraph){
+            int tOX = offsetX, tOY = offsetY;
+            p.setClipRect(x+1,y+16,209,134);
+            k = 134/float(width());
+            offsetX = -x; offsetY = -y;
+            p.setClipping(true);
+            drawGraph(tgraph,p);
+            p.setClipping(false);
+            offsetX = tOX;
+            offsetY = tOY;\
+            k = 1.0f;
+        }
+        //p.drawRect(x+20,y+30,60,50);
         p.setPen(QColor(255,255,255));
         p.drawText(QPoint(x+5,y+14),str);
         return;
     }
-    p.drawRect(x,y,100,80);
-    p.drawRect(x,y,100,15);
-    p.setPen(QColor(255,255,255));
-    p.drawText(QPoint(x+5,y+14),str);
+    p.drawRect(x,y,stW,stH);
+    p.drawRect(x,y,stW,stlH);
+    if(k>=1.0f){
+        p.setPen(QColor(255,255,255));
+        p.setFont(QFont("Arial",7,2));
+        p.drawText(QPoint(x+5,y+14),str);
+    }
 
 
 }
 
-void PaintWidget::paintEvent(QPaintEvent *){
-    QPainter p(this);
+void PaintWidget::drawGraph(States::StateDiagram<ScreenData>* graph, QPainter &p){
     p.fillRect(0,0,width(),height(),QBrush(QColor(0,0,0),Qt::SolidPattern));
     for(States::StateDiagram<ScreenData>::iterator i = graph->begin(); !i.isEnd() ; i++){
-        drawState(*i,p);
+        drawState(*i, graph, p );
         for(States::StateDiagram<ScreenData>::iterator j = graph->getConnections(*i); !j.isEnd(); ++j){
             drawConnection(*i,*j, p);
         }
     }
 }
+
+void PaintWidget::drawPath(QPainter &p){
+    if(pathSrc == 0 || pathDst == 0)
+        return;
+    pathDraw = true;
+    States::StateDiagram<ScreenData>::iterator i = graph->findPath(pathSrc,pathDst);
+    if(!i.isEnd()){
+        States::State<ScreenData>* temp = *i;
+        drawState(temp,graph,p);
+        for(; !i.isEnd(); ++i){
+            drawState(temp,graph,p);
+            drawConnection(temp,*i,p);
+            temp = *i;
+        }
+        drawState(temp,graph,p);
+    }
+    pathDraw = false;
+}
+
+void PaintWidget::paintEvent(QPaintEvent *){
+    QPainter p(this);
+    drawGraph(graph,p);
+    drawPath(p);
+}
+
+
 
 void PaintWidget::setGraph(States::StateDiagram<ScreenData>* d){
     graph = d;

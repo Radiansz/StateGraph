@@ -29,7 +29,7 @@
      <rect>
       <x>10</x>
       <y>0</y>
-      <width>311</width>
+      <width>320</width>
       <height>31</height>
      </rect>
     </property>
@@ -247,6 +247,7 @@
     <slot>delConnection()</slot>
     <slot>newName(QString)</slot>
     <slot>newInfo(QString)</slot>
+    <slot>newPath()</slot>
    </slots>
   </customwidget>
  </customwidgets>
@@ -407,8 +408,8 @@
      <y>149</y>
     </hint>
     <hint type="destinationlabel">
-     <x>649</x>
-     <y>85</y>
+     <x>650</x>
+     <y>138</y>
     </hint>
    </hints>
   </connection>
@@ -435,8 +436,8 @@
    <slot>newName(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>769</x>
-     <y>78</y>
+     <x>770</x>
+     <y>133</y>
     </hint>
     <hint type="destinationlabel">
      <x>588</x>
@@ -457,6 +458,22 @@
     <hint type="destinationlabel">
      <x>546</x>
      <y>182</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pathBut</sender>
+   <signal>clicked()</signal>
+   <receiver>widget</receiver>
+   <slot>newPath()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>736</x>
+     <y>413</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>523</x>
+     <y>366</y>
     </hint>
    </hints>
   </connection>
