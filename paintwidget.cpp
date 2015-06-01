@@ -319,10 +319,13 @@ QPoint PaintWidget::findPoint(States::State<ScreenData>* s1,States::State<Screen
 }
 
 void PaintWidget::drawConnection(States::State<ScreenData>* s1, States::State<ScreenData>* s2,QPainter &p){
+    QPen pen;
+    pen.setWidth(2);
     if(pathDraw)
-        p.setPen(pathColor);
+        pen.setColor(pathColor);
     else
-        p.setPen(unpick);
+        pen.setColor(unpick);
+    p.setPen(pen);
     QPoint p1 = findPoint(s1,s2), p2 = findPoint(s2,s1);
     p.drawLine(p1,p2);
     drawArrow(p1,p2,p);
@@ -349,10 +352,13 @@ void PaintWidget::drawState(States::State<ScreenData>* s,States::StateDiagram<Sc
     ScreenData d = s->getData();
     QString str = d.getName();
     int x = d.getX()*k - offsetX, y = d.getY()*k - offsetY;
+    QPen pen;
+    pen.setWidth(2);
     if(pathDraw)
-        p.setPen(pathColor);
+        pen.setColor(pathColor);
     else
-        p.setPen(d.getColor());
+        pen.setColor(d.getColor());
+    p.setPen(pen);
     if(graph->isInitialState(s)){
         p.drawEllipse(x+15*k,y+5*k,rad,rad);
         return;
@@ -425,6 +431,7 @@ void PaintWidget::drawPath(QPainter &p){
 
 void PaintWidget::paintEvent(QPaintEvent *){
     QPainter p(this);
+    p.setRenderHint(QPainter::Antialiasing);
     drawGraph(graph,p);
     drawPath(p);
 }
