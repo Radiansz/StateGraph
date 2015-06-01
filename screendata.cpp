@@ -78,12 +78,20 @@ QDomNode ScreenData::serializeToDom(){
     QString temp;
     QDomDocument doc("");
     QDomElement head = doc.createElement("ScreenData");
+
+    QDomElement nameDom =  doc.createElement("Name");
+    nameDom.appendChild(doc.createTextNode(name));
+    QDomElement infoDom =  doc.createElement("Info");
+    infoDom.appendChild(doc.createTextNode(info));
+
     QDomElement node1 = doc.createElement("X");
     QDomNode node2 = doc.createElement("Y");
     QDomText dstr= doc.createTextNode(temp.setNum(x));
     QDomText tstr= doc.createTextNode(temp.setNum(y));
     node1.appendChild(dstr);
     node2.appendChild(tstr);
+    head.appendChild(nameDom);
+    head.appendChild(infoDom);
     head.appendChild(node1);
     head.appendChild(node2);
     doc.appendChild(head);
@@ -101,13 +109,33 @@ void ScreenData::deserializeFromDom(QDomNode node){
     QDomNode temp;
     if(head.nodeName() == "ScreenData"){
         temp = head.firstChild();
+        if( temp.nodeName() == "Name"){
+            QString text = temp.firstChild().toText().data();
+            name = text;
+        }
+        else
+            throw States::BadXMLException();
+        temp = temp.nextSibling();
+        if( temp.nodeName() == "Info"){
+            QString text = temp.firstChild().toText().data();
+            info = text;
+        }
+        else
+            throw States::BadXMLException();
+        temp = temp.nextSibling();
         if( temp.nodeName() == "X"){
             QString text = temp.firstChild().toText().data();
             x = text.toInt();
         }
+        else
+            throw States::BadXMLException();
         temp = temp.nextSibling();
         if( temp.nodeName() == "Y"){
            y = temp.firstChild().toText().data().toInt();
         }
+        else
+            throw States::BadXMLException();
     }
+    else
+        throw States::BadXMLException();
 }

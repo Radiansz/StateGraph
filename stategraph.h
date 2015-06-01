@@ -16,7 +16,7 @@
 #include "QDomText"
 #include "QFile"
 #include "QTextStream"
-#include "QVector2D"
+#include "badxmlexception.h"
 
 
 namespace States {
@@ -156,25 +156,34 @@ namespace States {
 
     public:
         typedef StateIterator<T> iterator ;
+
         void setInitialState(State<T> *newState)
         {
-            if(findIndex(newState) == -1 )
+            try{
+                findIndex(newState);
+            }
+            catch(UnknownStateException e){
                 addState(newState);
+            }
             initialS = newState;
         }
 
         void setFinalState(State<T> *newState){
-            if(findIndex(newState) == -1 )
+            try{
+                findIndex(newState);
+            }
+            catch(UnknownStateException e){
                 addState(newState);
+            }
             finalS = newState;
         }
 
         bool isInitialState(State<T>* state){
-            return *state==initialS ? true : false;
+            return state==initialS ? true : false;
         }
 
         bool isFinalState(State<T>* state){
-            return *state==finalS ? true : false;
+            return state==finalS ? true : false;
         }
 
         void addState(State<T>* newState){
@@ -320,14 +329,14 @@ namespace States {
             try{
                 tempIn = findIndex(initialS);
             }
-            catch(WrongIndexStateException e){
+            catch(UnknownStateException e){
                 tempIn = - 1;
             }
             initTag.appendChild(doc.createTextNode(temp.setNum(tempIn)));
             try{
                 tempIn = findIndex(finalS);
             }
-            catch(WrongIndexStateException e){
+            catch(UnknownStateException e){
                 tempIn = - 1;
             }
             finalTag.appendChild(doc.createTextNode(temp.setNum(tempIn)));
@@ -375,6 +384,8 @@ namespace States {
                             addState(tempS);
                     }
                 }
+                else
+                    throw BadXMLException();
                 temp = temp.nextSiblingElement();
                 if(temp.nodeName() == "Connections"){
                     QDomNodeList l = temp.childNodes();
@@ -388,22 +399,34 @@ namespace States {
                                 int t2 = tempDst.firstChild().toText().data().toInt();
                                 connections[t1].push_back(t2);
                             }
+                            else
+                                throw BadXMLException();
                         }
+                        else
+                            throw BadXMLException();
                     }
                 }
+                else
+                    throw BadXMLException();
                 temp = temp.nextSiblingElement();
                 if( temp.nodeName() == "initialState"){
                     int t1 = temp.firstChild().toText().data().toInt();
                     if(t1 >= 0 && t1 < statesAmount)
                         initialS = findState(t1);
                 }
+                else
+                    throw BadXMLException();
                 temp = temp.nextSiblingElement();
                 if( temp.nodeName() == "finalState"){
                     int t1 = temp.firstChild().toText().data().toInt();
                     if(t1 >= 0 && t1 < statesAmount)
                         finalS = findState(t1);
                 }
+                else
+                    throw BadXMLException();
             }
+            else
+                throw BadXMLException();
         }
 
         StateManip<T>& statesDesc(int i){

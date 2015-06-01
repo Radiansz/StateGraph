@@ -8,6 +8,7 @@
 #include "QDomNode"
 #include "QDomElement"
 #include "QDomText"
+#include "badxmlexception.h"
 namespace States {
 
     template <class V>
@@ -104,7 +105,11 @@ namespace States {
                     dataN.deserializeFromDom(temp.firstChild());
                     data = dataN;
                 }
+                else
+                    throw BadXMLException();
             }
+            else
+                throw BadXMLException();
         }
 
     };

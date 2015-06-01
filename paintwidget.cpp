@@ -13,12 +13,7 @@ PaintWidget::PaintWidget(QWidget *parent):QWidget(parent),pick(QColor(255,40,40)
     graph->addState(new States::State<ScreenData>(ScreenData(90,150)));
     graph->addConnection(0,1);
     graph->addConnection(1,2);
-    creatingState = false;
-    movingState = false;
-    creatingConn = false;
-    pickingPath = false;
-    movingScreen = false;
-    stage2 = false;
+    offAll();
 
     offsetX = 0;
     offsetY = 0;
@@ -34,21 +29,85 @@ PaintWidget::~PaintWidget()
 {
 
 }
-//Сигналы
+//**************************************
+//Слоты
+//**************************************
 void PaintWidget::newState(){
+    offAll();
     creatingState = true;
+    ordinary = true;
 }
+void PaintWidget::newIState(){
+    offAll();
+    creatingState = true;
+    initial = true;
+}
+
+void PaintWidget::newFState(){
+    offAll();
+    creatingState = true;
+    final = true;
+}
+
+void PaintWidget::newSState(){
+    offAll();
+    creatingState = true;
+    super = true;
+}
+
 void PaintWidget::newConnection(){
+    offAll();
     creatingConn = true;
 }
 
+void PaintWidget::delState(){
+    if(choosedState != 0){
+        graph->removeState(choosedState);
+        choosedState = 0;
+    }
+    update();
+}
+
+void PaintWidget::delConnection(){
+    offAll();
+    removeCon = true;
+}
+
 void PaintWidget::openFile(QString file){
-    int i =2;
+    States::StateDiagram<ScreenData>* testG = new States::StateDiagram<ScreenData>();
+    try{
+        testG->deserializeFromFile(file);
+    }
+    catch(States::BadXMLException e){
+        return;
+    }
+    delete testG;
+    graph->deserializeFromFile(file);
 }
 
 void PaintWidget::saveFile(QString file){
+   graph->serializeToFile(file);
 
 }
+void PaintWidget::newName(QString name){
+    if(choosedState){
+        ScreenData sd = choosedState->getData();
+        sd.setName(name);
+        choosedState->setData(sd);
+        update();
+    }
+}
+
+void PaintWidget::newInfo(QString info){
+    if(choosedState){
+        ScreenData sd = choosedState->getData();
+        sd.setInfo(info);
+        choosedState->setData(sd);
+        update();
+    }
+}
+
+//**************************************
 
 
 bool PaintWidget::isBusy(){
@@ -75,11 +134,28 @@ QPoint PaintWidget::findPoint(States::State<ScreenData>* s1,States::State<Screen
     return QPoint(tx - offsetX,ty - offsetY);
 }
 
+void PaintWidget::offAll(){
+    creatingState = false;
+    movingState = false;
+    creatingConn = false;
+    pickingPath = false;
+    movingScreen = false;
+    stage2 = false;
+    initial = false;
+    final = false;
+    super = false;
+    ordinary = false;
+    removeState = false;
+    removeCon = false;
+}
+
 void PaintWidget::pickState(States::State<ScreenData>* s){
     ScreenData sd = s->getData();
     sd.setColor(pick);
     s->setData(sd);
     choosedState = s;
+    emit nameChng(sd.getName());
+    emit infoChng(sd.getInfo());
 }
 
 void PaintWidget::unpickState(States::State<ScreenData>* s){
@@ -90,9 +166,26 @@ void PaintWidget::unpickState(States::State<ScreenData>* s){
     }
 }
 
+void PaintWidget::mouseDoubleClickEvent(QMouseEvent * e){
+    int x = e->x() + offsetX, y = e->y() + offsetY;
+    if(!isBusy()){
+        States::State<ScreenData> *st = findState(x,y);
+        if(st){
+            States::SuperState<ScreenData>* test = dynamic_cast<States::SuperState<ScreenData>*>(st);
+            if(test){
+                MainWindow* mw = new MainWindow((QWidget*)this->parent(),test->getInnerGraph());
+                mw->show();
+            }
+        }
+
+    }
+}
+
+
 void PaintWidget::mousePressEvent(QMouseEvent* e){
     int x = e->x() + offsetX, y = e->y() + offsetY;
-    if(creatingConn){
+    //Добавление удаление связи
+    if(creatingConn || removeCon){
         States::State<ScreenData> *st = findState(x,y);
         if(!stage2){
             unpickState(choosedState);
@@ -101,12 +194,16 @@ void PaintWidget::mousePressEvent(QMouseEvent* e){
         }
         else
         {
-            graph->addConnection(choosedState,st);
+            if(creatingConn)
+                graph->addConnection(choosedState,st);
+            else
+                graph->removeConnection(choosedState,st);
             stage2 = false;
             creatingConn = false;
+            removeCon = false;
         }
     }
-
+    //Выбор/начало перемещения состояния или начало перемещения экрана
     if(!isBusy()){
         States::State<ScreenData> *st = findState(x,y);
         if(st == 0){
@@ -125,16 +222,37 @@ void PaintWidget::mousePressEvent(QMouseEvent* e){
 
 void PaintWidget::mouseReleaseEvent(QMouseEvent* e){
     int x = e->x() + offsetX, y = e->y() + offsetY;
+    // Создание одного из состояний
     if(creatingState){
-        graph->addState(new States::State<ScreenData>(ScreenData(x,y)));
+        if(initial){
+            graph->setInitialState(new States::State<ScreenData>(ScreenData(x,y)));
+            initial = false;
+        }
+        if(final){
+            graph->setFinalState(new States::State<ScreenData>(ScreenData(x,y)));
+            final = false;
+        }
+        if(super){
+            States::SuperState<ScreenData>* ss = new States::SuperState<ScreenData>(ScreenData(x,y));
+            ss->setInnerGraph(new States::StateDiagram<ScreenData>());
+            graph->addState(ss);
+            super = false;
+
+        }
+        if(ordinary){
+            graph->addState(new States::State<ScreenData>(ScreenData(x,y)));
+            ordinary = false;
+        }
         creatingState = false;
         update();
         return;
     }
+    // Окончание перемещения экрана
     if(movingScreen){
         movingScreen = false;
         update();
     }
+    // Окончание перемещения состояния
     if(movingState){
         movingState = false;
         update();
@@ -142,7 +260,6 @@ void PaintWidget::mouseReleaseEvent(QMouseEvent* e){
 }
 
 void PaintWidget::mouseMoveEvent(QMouseEvent* e){
-    int x = e->x() + offsetX, y = e->y() + offsetY;
     if(movingScreen){
         offsetX += (oldX - e->x());
         offsetY += (oldY - e->y());
@@ -167,17 +284,39 @@ void PaintWidget::drawConnection(States::State<ScreenData>* s1, States::State<Sc
 }
 
 void PaintWidget::drawState(States::State<ScreenData>* s, QPainter &p){
+
+
     ScreenData d = s->getData();
     QString str = d.getName();
     int x = d.getX() - offsetX, y = d.getY() - offsetY;
-    p.setPen(d.getColor());
+     p.setPen(d.getColor());
+    if(graph->isInitialState(s)){
+        p.drawEllipse(x+15,y+5,70,70);
+        return;
+    }
+    if(graph->isFinalState(s)){
+        p.drawEllipse(x+15,y+5,70,70);
+        p.drawEllipse(x,y,30,30);
+        return;
+    }
+    States::SuperState<ScreenData>* test = dynamic_cast<States::SuperState<ScreenData>*>(s);
+    if(test != 0){
+        p.drawRect(x,y,100,80);
+        p.drawRect(x,y,100,15);
+        p.drawRect(x+20,y+30,60,50);
+        p.setPen(QColor(255,255,255));
+        p.drawText(QPoint(x+5,y+14),str);
+        return;
+    }
     p.drawRect(x,y,100,80);
     p.drawRect(x,y,100,15);
     p.setPen(QColor(255,255,255));
     p.drawText(QPoint(x+5,y+14),str);
+
+
 }
 
-void PaintWidget::paintEvent(QPaintEvent * z){
+void PaintWidget::paintEvent(QPaintEvent *){
     QPainter p(this);
     p.fillRect(0,0,width(),height(),QBrush(QColor(0,0,0),Qt::SolidPattern));
     for(States::StateDiagram<ScreenData>::iterator i = graph->begin(); !i.isEnd() ; i++){
@@ -188,3 +327,6 @@ void PaintWidget::paintEvent(QPaintEvent * z){
     }
 }
 
+void PaintWidget::setGraph(States::StateDiagram<ScreenData>* d){
+    graph = d;
+}

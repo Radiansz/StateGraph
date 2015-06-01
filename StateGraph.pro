@@ -23,7 +23,8 @@ SOURCES += main.cpp\
     wrongindexstateexception.cpp \
     unknownstateexception.cpp \
     paintwidget.cpp \
-    screendata.cpp
+    screendata.cpp \
+    badxmlexception.cpp
 
 HEADERS  += mainwindow.h \
     state.h \
@@ -36,6 +37,7 @@ HEADERS  += mainwindow.h \
     wrongindexstateexception.h \
     unknownstateexception.h \
     paintwidget.h \
-    screendata.h
+    screendata.h \
+    badxmlexception.h
 
 FORMS    += mainwindow.ui

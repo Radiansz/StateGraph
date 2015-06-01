@@ -8,6 +8,7 @@
 #include "QDomNode"
 #include "QDomElement"
 #include "QDomText"
+#include "badxmlexception.h"
 
 namespace States {
 
@@ -96,6 +97,9 @@ public:
                 dataN.deserializeFromDom(temp.firstChild());
                 State<T>::setData(dataN);
             }
+            else{
+                throw States::BadXMLException();
+            }
             temp = temp.nextSiblingElement();
             if( temp.nodeName() == "Graph"){
                 QDomNode node = temp.firstChild();
@@ -109,7 +113,11 @@ public:
                     innerGraph = graph;
                 }
             }
+            else
+                throw BadXMLException();
         }
+        else
+            throw BadXMLException();
     }
 
 };

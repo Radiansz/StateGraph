@@ -6,6 +6,7 @@
 #include "QDomElement"
 #include "QDomText"
 #include "QColor"
+#include "badxmlexception.h"
 
 class ScreenData
 {
