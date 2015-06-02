@@ -4,7 +4,7 @@ namespace States {
 
 WrongIndexStateException::WrongIndexStateException()
 {
-    error = "WrongIndexStateException";
+
     lastException = this;
 }
 
@@ -20,7 +20,7 @@ WrongIndexStateException::~WrongIndexStateException() throw(){
 }
 
 const char* WrongIndexStateException::what() const throw(){
-    return error;
+    return "Impossible to find state with such an index";
 }
 
 }

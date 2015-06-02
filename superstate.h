@@ -12,10 +12,10 @@
 
 namespace States {
 
-template <class V>
+template <class T>
 class StateDiagram;
 
-template <class C>
+template <class T>
 class State;
 
 template <class T>

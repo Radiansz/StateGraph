@@ -20,13 +20,13 @@
 
 
 namespace States {
-    template <class V>
+    template <class T>
     class State;
 
-    template <class V>
+    template <class T>
     class SuperState;
 
-    template <class D>
+    template <class T>
     class StateIterator;
 
     template <class T>

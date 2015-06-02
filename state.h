@@ -11,7 +11,7 @@
 #include "badxmlexception.h"
 namespace States {
 
-    template <class V>
+    template <class T>
     class StateDiagram;
 
     template <class T>

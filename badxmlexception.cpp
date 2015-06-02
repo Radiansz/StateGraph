@@ -2,7 +2,6 @@
 namespace States {
     BadXMLException::BadXMLException()
     {
-        error = "UnknownStateException";
         lastException = this;
     }
 

@@ -10,7 +10,6 @@ class StateException : public std::exception
 {
 protected:
     static StateException* lastException;
-    char* error;
 public:
 
     StateException() ;

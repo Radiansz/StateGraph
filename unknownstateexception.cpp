@@ -4,7 +4,6 @@ namespace States {
 
 UnknownStateException::UnknownStateException()
 {
-    error = "UnknownStateException";
     lastException = this;
 }
 
@@ -19,7 +18,7 @@ UnknownStateException::~UnknownStateException() throw(){
 }
 
 const char* UnknownStateException::what() const throw(){
-    return error;
+    return "Impossible to find index of a state";
 }
 
 }
