@@ -2,6 +2,7 @@
 #define StateDiagram_H
 #include <iomanip>
 #include <iostream>
+#include <string>
 #include <vector>
 #include <state.h>
 #include <superstate.h>
@@ -39,9 +40,11 @@ namespace States {
     }
 
     template <class T>
-    std::istream& operator>> (std::istream& in, StateDiagram<T>& graph){
-
-        return in;
+    std::istream& operator>> (std::istream& out, StateDiagram<T>& graph){
+        std::string str;
+        out >> str;
+        graph->deserialize(str);
+        return out;
     }
 
     template <class T>
@@ -49,6 +52,7 @@ namespace States {
     {
 
         friend std::ostream& operator<< <T>(std::ostream&, StateDiagram&);
+        friend std::istream& operator>> (std::istream& out, StateDiagram<T>& graph);
         friend class StateManip<T>;
 
         State<T>* initialS;
@@ -450,11 +454,12 @@ namespace States {
         }
 
         StateManip<T>& statesDesc(int i){
+            if(manip)
+                delete manip;
+            manip = new StateManip<T>(this,i);
             return *manip;
         }
     };
-
-
     template <class T>
     std::ostream& operator<< (std::ostream& out, StateManip<T>& mnp){
         std::vector<State<T>*> states = mnp.getStates();
@@ -475,9 +480,18 @@ namespace States {
     }
 
     template <class T>
-    class StateManip{
+    std::istream& operator>> (std::istream& out, StateManip<T>& mnp){
+        std::string str;
+        out >> str;
+        mnp.getGraph()->deserialize(str);
+        return out;
+    }
 
+    template <class T>
+    class StateManip{
+        friend std::istream& operator>> <T> (std::istream&, StateManip&);
         friend std::ostream& operator<< <T>(std::ostream&, StateManip&);
+
         typedef typename std::vector<State<T>* >::const_iterator statesCI;
         int statesNum;
         StateDiagram<T>* graph;
@@ -486,16 +500,20 @@ namespace States {
             return graph->states;
         }
 
+        StateDiagram<T>* getGraph(){
+            return graph;
+        }
+
         int getAm(){
             return graph->statesAmount;
         }
-
         public:
 
         StateManip(){}
         StateManip(StateDiagram<T>* graph, int i=1):graph(graph),statesNum(i){
 
         }
+
 
 
     };
